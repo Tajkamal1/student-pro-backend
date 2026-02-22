@@ -6,6 +6,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
+    "https://student-pro-henna.vercel.app"  # Add your frontend URL
 ]
 
 app.add_middleware(

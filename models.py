@@ -1,13 +1,13 @@
 from pymongo import MongoClient, errors
-import os, hashlib, secrets
 from bson import ObjectId
 from bson.errors import InvalidId
+import os, hashlib, secrets
 from dotenv import load_dotenv
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 
-# --- Connect to MongoDB ---
+# Connect to MongoDB
 try:
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     client.server_info()
@@ -19,25 +19,24 @@ db = client["Student-Pro-DB"]
 users_collection = db["users"]
 dashboards_collection = db["dashboardsdata"]
 
-# --- Password hashing ---
+# Password hashing
 def hash_password(password: str, salt: str) -> str:
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
-# --- User helpers ---
+# Create user
 def create_user(name: str, email: str, password: str) -> dict:
     salt = secrets.token_hex(16)
     hashed_password = hash_password(password, salt)
     
-    # Insert user
     user = {"name": name, "email": email, "salt": salt, "password": hashed_password}
     result = users_collection.insert_one(user)
     user["_id"] = str(result.inserted_id)
 
-    # Create dashboard data for this user (include name/email)
+    # Create initial dashboard
     dashboard = {
         "userId": result.inserted_id,
-        "name": name,            # Include name
-        "email": email,          # Include email
+        "name": name,
+        "email": email,
         "studyHours": 0,
         "tasksCompleted": 0,
         "attendance": 0,
@@ -66,7 +65,6 @@ def find_user_by_id(user_id: str):
 def verify_password(plain_password: str, user: dict) -> bool:
     return hash_password(plain_password, user["salt"]) == user["password"]
 
-# --- Dashboard helpers ---
 def get_dashboard_by_userid(user_id: str):
     try:
         obj_id = ObjectId(user_id)
