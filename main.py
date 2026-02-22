@@ -8,7 +8,7 @@ app = FastAPI()
 # Frontend URLs
 origins = [
     "http://localhost:3000",
-    "https://student-pro-frontend.vercel.app/register"
+    "https://student-pro-frontend.vercel.app"
 ]
 
 app.add_middleware(
