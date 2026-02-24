@@ -1,16 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import auth, dashboard
-import os
+from routes import auth, dashboard, tasks
 
 app = FastAPI()
 
-# Frontend URLs
 origins = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
     "http://localhost:3000",
-    "https://student-pro-frontend.vercel.app"
 ]
 
+# 🔥 ADD THIS PART (YOU MISSED THIS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -19,15 +19,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Routers
 app.include_router(auth.router, prefix="/auth")
 app.include_router(dashboard.router, prefix="/dashboard")
+app.include_router(tasks.router, prefix="/tasks")
 
 @app.get("/")
 def root():
-    return {"message": "Backend is running!"}
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    return {"message": "Backend Running"}
