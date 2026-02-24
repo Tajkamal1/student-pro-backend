@@ -1,20 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import auth, dashboard, tasks
-import os
+from notify import start_scheduler  # Import scheduler
 
 app = FastAPI()
 
-# ==============================
+# -----------------------------
 # CORS CONFIGURATION
-# ==============================
-
+# -----------------------------
 origins = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000",
     "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "https://student-pro-delta.vercel.app",  # ✅ Your hosted frontend
+    "https://student-pro-delta.vercel.app",
 ]
 
 app.add_middleware(
@@ -25,14 +22,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==============================
+# -----------------------------
 # ROUTERS
-# ==============================
-
+# -----------------------------
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 
+# -----------------------------
+# STARTUP EVENT
+# -----------------------------
+@app.on_event("startup")
+def startup_event():
+    # Start the scheduler when FastAPI starts
+    start_scheduler()
+
+# -----------------------------
+# ROOT ROUTE
+# -----------------------------
 @app.get("/")
 def root():
     return {"message": "Student Pro Backend Running 🚀"}
