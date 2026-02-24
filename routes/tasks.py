@@ -9,6 +9,7 @@ def get_tasks(user_id: str):
     data = list(tasks.find({"userId": ObjectId(user_id)}))
     for t in data:
         t["_id"] = str(t["_id"])
+        t["userId"] = str(t["userId"])
     return data
 
 @router.post("/{user_id}")
@@ -16,6 +17,7 @@ def create_task(user_id: str, task: dict):
     task["userId"] = ObjectId(user_id)
     result = tasks.insert_one(task)
     task["_id"] = str(result.inserted_id)
+    task["userId"] = str(task["userId"])
     return task
 
 @router.put("/{task_id}")

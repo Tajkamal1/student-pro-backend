@@ -4,24 +4,14 @@ from models import create_user, find_user_by_email, verify_password
 
 router = APIRouter()
 
-# ======================
-# MODELS
-# ======================
-
 class RegisterModel(BaseModel):
     name: str
     email: EmailStr
     password: str
 
-
 class LoginModel(BaseModel):
     email: EmailStr
     password: str
-
-
-# ======================
-# REGISTER
-# ======================
 
 @router.post("/register")
 def register(data: RegisterModel):
@@ -35,11 +25,6 @@ def register(data: RegisterModel):
         "message": "Registered successfully",
         "userId": user_id
     }
-
-
-# ======================
-# LOGIN
-# ======================
 
 @router.post("/login")
 def login(data: LoginModel):

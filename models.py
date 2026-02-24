@@ -1,6 +1,7 @@
 from bson import ObjectId
 from database import users, dashboards
-import hashlib, secrets
+import hashlib
+import secrets
 
 
 def hash_password(password, salt):

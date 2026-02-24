@@ -7,5 +7,5 @@ router = APIRouter()
 def get_user_dashboard(user_id: str):
     dashboard = get_dashboard(user_id)
     if not dashboard:
-        raise HTTPException(404, "Dashboard not found")
+        raise HTTPException(status_code=404, detail="Dashboard not found")
     return dashboard
