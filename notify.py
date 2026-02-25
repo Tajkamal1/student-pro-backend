@@ -3,12 +3,13 @@ from database import tasks
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import os
 
 # =============================
-# Gmail Credentials (Hardcoded)
+# USE ENV VARIABLES (IMPORTANT)
 # =============================
-EMAIL_ADDRESS = "gfree2960@gmail.com"
-EMAIL_PASSWORD = "rhqh tzpc zxkv oftv"  # Gmail App Password
+EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 
 # =============================
@@ -35,24 +36,8 @@ def send_email(to_email, subject, task):
                 <p>Hi <strong style="color: #28a745;">{user_name}</strong>,</p>
                 <p>Your task is due soon:</p>
 
-                <table style="width:100%; margin-top:15px; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding:8px; background:#007bff; color:white; font-weight:bold;">
-                            Task Title
-                        </td>
-                        <td style="padding:8px; border:1px solid #ddd;">
-                            {task_title}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding:8px; background:#17a2b8; color:white; font-weight:bold;">
-                            Due Date & Time
-                        </td>
-                        <td style="padding:8px; border:1px solid #ddd;">
-                            {due}
-                        </td>
-                    </tr>
-                </table>
+                <p><strong>Task:</strong> {task_title}</p>
+                <p><strong>Due:</strong> {due}</p>
 
                 <p style="margin-top:20px; color:#6c757d;">
                     - Sent by Student Pro 🚀
@@ -69,20 +54,22 @@ def send_email(to_email, subject, task):
         msg["Subject"] = subject
         msg.attach(MIMEText(html_content, "html"))
 
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=15)
         server.starttls()
         server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
         server.send_message(msg)
         server.quit()
 
         print(f"[INFO] Email sent to {to_email}")
+        return True
 
     except Exception as e:
         print(f"[ERROR] Failed to send email: {e}")
+        return False
 
 
 # =============================
-# Task Checker (Called by FastAPI endpoint)
+# Task Checker (Called by Cron)
 # =============================
 def check_tasks():
     print("[INFO] Checking tasks...")
@@ -107,20 +94,27 @@ def check_tasks():
             user_email = task.get("email")
             user_name = task.get("name")
 
+            print("NOW:", now)
+            print("DUE:", due)
+
+            # Send reminder if due within next 1 hour
             if user_email and user_name and now <= due <= (now + timedelta(hours=1)):
 
-                send_email(
+                email_sent = send_email(
                     user_email,
                     f"Reminder: Task '{task['title']}' due soon",
                     task
                 )
 
-                tasks.update_one(
-                    {"_id": task["_id"]},
-                    {"$set": {"notified": True}}
-                )
-
-                print(f"[INFO] Task marked notified: {task['_id']}")
+                # Only mark notified if email really sent
+                if email_sent:
+                    tasks.update_one(
+                        {"_id": task["_id"]},
+                        {"$set": {"notified": True}}
+                    )
+                    print(f"[INFO] Task marked notified: {task['_id']}")
+                else:
+                    print("[WARNING] Email failed. Not updating notified flag.")
 
         except Exception as e:
             print(f"[ERROR] Checking task {task.get('_id')}: {e}")
