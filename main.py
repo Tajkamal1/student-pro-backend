@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import auth, dashboard, tasks
-from notify import start_scheduler  # Import scheduler
+from notify import check_tasks  # Import check function directly
 
 app = FastAPI()
 
@@ -30,12 +30,13 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 
 # -----------------------------
-# STARTUP EVENT
+# NOTIFICATION ENDPOINT (FREE CRON WILL CALL THIS)
 # -----------------------------
-@app.on_event("startup")
-def startup_event():
-    # Start the scheduler when FastAPI starts
-    start_scheduler()
+@app.get("/run-notifications")
+def run_notifications():
+    print("Running notification check...")
+    check_tasks()
+    return {"status": "Notifications checked successfully"}
 
 # -----------------------------
 # ROOT ROUTE
