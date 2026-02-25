@@ -5,15 +5,16 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 
+
 # =============================
-# USE ENV VARIABLES (IMPORTANT)
+# ENV VARIABLES (SET IN RENDER)
 # =============================
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 
 # =============================
-# Email Sender
+# EMAIL SENDER FUNCTION
 # =============================
 def send_email(to_email, subject, task):
     try:
@@ -64,12 +65,12 @@ def send_email(to_email, subject, task):
         return True
 
     except Exception as e:
-        print(f"[ERROR] Failed to send email: {e}")
+        print(f"[ERROR] Email failed: {e}")
         return False
 
 
 # =============================
-# Task Checker (Called by Cron)
+# TASK CHECKER (CRON CALLS THIS)
 # =============================
 def check_tasks():
     print("[INFO] Checking tasks...")
@@ -87,6 +88,7 @@ def check_tasks():
             if not task.get("dueDateTime"):
                 continue
 
+            # Convert stored time to IST timezone
             due = datetime.fromisoformat(
                 task["dueDateTime"]
             ).replace(tzinfo=ist)
@@ -94,11 +96,15 @@ def check_tasks():
             user_email = task.get("email")
             user_name = task.get("name")
 
+            # Calculate time difference in seconds
+            time_diff = (due - now).total_seconds()
+
             print("NOW:", now)
             print("DUE:", due)
+            print("TIME DIFF (seconds):", time_diff)
 
-            # Send reminder if due within next 1 hour
-            if user_email and user_name and now <= due <= (now + timedelta(hours=1)):
+            # Send reminder if due within next 65 minutes
+            if user_email and user_name and 0 <= time_diff <= 3900:
 
                 email_sent = send_email(
                     user_email,
@@ -106,7 +112,6 @@ def check_tasks():
                     task
                 )
 
-                # Only mark notified if email really sent
                 if email_sent:
                     tasks.update_one(
                         {"_id": task["_id"]},
@@ -114,7 +119,7 @@ def check_tasks():
                     )
                     print(f"[INFO] Task marked notified: {task['_id']}")
                 else:
-                    print("[WARNING] Email failed. Not updating notified flag.")
+                    print("[WARNING] Email not sent. Task not marked notified.")
 
         except Exception as e:
             print(f"[ERROR] Checking task {task.get('_id')}: {e}")
